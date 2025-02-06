@@ -3,10 +3,13 @@ from PIL import Image
 import cv2
 from matplotlib import pyplot as plt
 import numpy as np
+import pdb
 
 file_name = ""
+
+
 def main():
-    add_image_process('fuecoco.jpeg')
+    add_image_process('drifbloomMissingCorner.jpeg')
 
         # ##Perhaps use .Canny() for cropping to edges
         # img2 = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
@@ -24,7 +27,7 @@ def add_image_process(name):
     file_name = name
     img = cv2.imread(fr'C:/Users/James.Goulding/PycharmProjects/PokemonProject/flaskr/User_Files/{file_name}')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (7, 7), 0)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
     thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 205, 1)
     return find_largest_area(thresh, img)
@@ -48,28 +51,37 @@ def find_largest_area(thresh, originalImg):
     return crop_image_to_box(filtered, originalImg)
 
 def crop_image_to_box(filtered, originalImg):
-    print(f"{filtered[0]}")
+
     rect = cv2.minAreaRect(filtered[0])
     box = cv2.boxPoints(rect)
-    print(f"{rect[0]}")
-    print(f"{box}")
+
     pts = order_points(box)
-    wrapped_img = four_point_transform(originalImg, pts)
-    plt.imshow(wrapped_img)
-    # Load the image
-    cv2.imwrite("../Output/FullImageCropped.png", wrapped_img)
-    img2 = extract_colour(wrapped_img)
+
+    cropped_to_card = four_point_transform(originalImg, pts)
+
+    cv2.imwrite("../Output/FullImageCropped.png", cropped_to_card)
+    full_crop_no_colour = extract_colour(cropped_to_card)
     ###Why is it not writing?
-    cv2.imwrite(f"Processed_Files/{file_name}", img2)
-    print(f"{file_name}")
-    img = wrapped_img
-    # Calculate midpoints
+    cv2.imwrite(f"Processed_Files/{file_name}", full_crop_no_colour)
+
+    img = cropped_to_card
+
     height = img.shape[0]
     width = img.shape[1]
-    bottom_left_corner = img[height//2:, :width//2]
-    cv2.imwrite("../Output/QuarterCropped.png", bottom_left_corner)
-    extract_colour(bottom_left_corner)
-    return bottom_left_corner
+    bottom_left_crop = img[height//2:, :width//2]
+    cv2.imwrite("../Output/QuarterCropped.png", bottom_left_crop)
+    bottom_left_crop_no_colour = extract_colour(bottom_left_crop)
+
+    height = bottom_left_crop.shape[0]
+    width = bottom_left_crop.shape[1]
+    cropped_final = bottom_left_crop[height//2:, :width//2]
+    cv2.imwrite("../Output/FinalZoom.png", cropped_final)
+
+    cropped_final_no_colour = extract_colour(cropped_final)
+
+    imageArray = [cropped_final_no_colour, cropped_final, bottom_left_crop_no_colour, bottom_left_crop, full_crop_no_colour, cropped_to_card]
+
+    return imageArray
 
 
 
@@ -78,10 +90,11 @@ def extract_colour(img):
 
     Lchannel = imgHLS[:, :, 1]
 
-    mask = cv2.inRange(Lchannel, 0, 50)
+    mask = cv2.inRange(Lchannel, 0, 80)
 
     result = cv2.bitwise_not(mask)
     print("GOT HERE")
+    # breakpoint()
     cv2.imwrite(f"Processed_Files/{file_name}", result)
     print("FILE NAME IS: " +file_name)
     return result

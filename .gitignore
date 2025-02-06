@@ -1,7 +1,7 @@
 /.venv
 /.idea
-/.pokemon-tcg-sdk-python
-*.pyc
+flaskr/APIKEY.py
+pokemon-tcg-sdk-python/
 __pycache__/
 
 instance/
