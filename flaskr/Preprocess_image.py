@@ -1,3 +1,4 @@
+import os
 import this
 from PIL import Image
 import cv2
@@ -9,95 +10,118 @@ file_name = ""
 
 
 def main():
-    add_image_process('drifbloomMissingCorner.jpeg')
+	add_image_process('Eevee.jpeg')
 
-        # ##Perhaps use .Canny() for cropping to edges
-        # img2 = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-        # print("Image shape:", img2.shape)
-        # print("Image dtype:", img2.dtype)
-        # img2 = img2.astype(np.uint8)
-        # edges = cv2.Canny(img2, 100, 200, 3)
-        # plt.subplot(122), plt.imshow(edges, cmap='gray')
-        # plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-        #
-        # plt.show()
+		# ##Perhaps use .Canny() for cropping to edges
+		# img2 = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+		# print("Image shape:", img2.shape)
+		# print("Image dtype:", img2.dtype)
+		# img2 = img2.astype(np.uint8)
+		# edges = cv2.Canny(img2, 100, 200, 3)
+		# plt.subplot(122), plt.imshow(edges, cmap='gray')
+		# plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
+		#
+		# plt.show()
 
 def add_image_process(name):
-    global file_name
-    file_name = name
-    img = cv2.imread(fr'C:/Users/James.Goulding/PycharmProjects/PokemonProject/flaskr/User_Files/{file_name}')
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+	global file_name
+	file_name = name
+	img = cv2.imread(fr'flaskr\User_Files\{file_name}') #remove flaskr/ when running locally
 
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 205, 1)
-    return find_largest_area(thresh, img)
+	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	write_image_to_showcase(1, gray)#!#!
+
+	blur = cv2.GaussianBlur(gray, (5, 5), 0)
+	write_image_to_showcase(2, blur)
+
+	#Thresh used for contours
+	thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 205, 1)
+	write_image_to_showcase(3, thresh)
+
+	return find_largest_area(thresh, img)
 
 def find_largest_area(thresh, originalImg):
 
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    filtered = []
-    for c in contours:
-        area = cv2.contourArea(c)
-        if area > 10000:
-            filtered.append(c)
-    xArea = 0
-    x = None
-    for f in filtered:
-        area = cv2.contourArea(f)
-        if area > xArea:
-            x = f
-            xArea = area
-    filtered = [x]
-    return crop_image_to_box(filtered, originalImg)
+	contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+	filtered = []
+	for c in contours:
+		area = cv2.contourArea(c)
+		if area > 10000:
+			filtered.append(c)
+
+	xArea = 0
+	x = None
+	for f in filtered:
+		area = cv2.contourArea(f)
+		if area > xArea:
+			x = f
+			xArea = area
+	filtered = [x]
+
+	drawn_image = originalImg.copy()
+	img_with_all_contours = cv2.drawContours(drawn_image, contours, -1, (0, 255, 0), 5)
+	write_image_to_showcase("ImageWithAllContours", img_with_all_contours)
+	img_with_contour = cv2.drawContours(drawn_image, filtered[0], -1, (0, 255, 0), 5)
+	write_image_to_showcase("ImageWithBigContour", img_with_contour)
+
+	return crop_image_to_box(filtered, originalImg)
 
 def crop_image_to_box(filtered, originalImg):
 
-    rect = cv2.minAreaRect(filtered[0])
-    box = cv2.boxPoints(rect)
+	rect = cv2.minAreaRect(filtered[0])
+	box = cv2.boxPoints(rect)
 
-    pts = order_points(box)
+	pts = order_points(box)
 
-    cropped_to_card = four_point_transform(originalImg, pts)
+	cropped_to_card = four_point_transform(originalImg, pts)
 
-    cv2.imwrite("../Output/FullImageCropped.png", cropped_to_card)
-    full_crop_no_colour = extract_colour(cropped_to_card)
-    ###Why is it not writing?
-    cv2.imwrite(f"Processed_Files/{file_name}", full_crop_no_colour)
+	write_image_to_showcase(4, cropped_to_card)
+	cv2.imwrite("../Output/FullImageCropped.png", cropped_to_card)
 
-    img = cropped_to_card
+	full_crop_no_colour = extract_colour(cropped_to_card)
+	write_image_to_showcase(5, full_crop_no_colour)
+	cv2.imwrite(f"Processed_Files/{file_name}", full_crop_no_colour)
 
-    height = img.shape[0]
-    width = img.shape[1]
-    bottom_left_crop = img[height//2:, :width//2]
-    cv2.imwrite("../Output/QuarterCropped.png", bottom_left_crop)
-    bottom_left_crop_no_colour = extract_colour(bottom_left_crop)
+	img = cropped_to_card
 
-    height = bottom_left_crop.shape[0]
-    width = bottom_left_crop.shape[1]
-    cropped_final = bottom_left_crop[height//2:, :width//2]
-    cv2.imwrite("../Output/FinalZoom.png", cropped_final)
+	height = img.shape[0]
+	width = img.shape[1]
+	bottom_left_crop = img[height//2:, :width//2]
+	cv2.imwrite("Processed_Files/QuarterCropped.png", bottom_left_crop)
+	write_image_to_showcase(6, bottom_left_crop)
 
-    cropped_final_no_colour = extract_colour(cropped_final)
+	bottom_left_crop_no_colour = extract_colour(bottom_left_crop)
+	write_image_to_showcase(7, bottom_left_crop_no_colour)
 
-    imageArray = [cropped_final_no_colour, cropped_final, bottom_left_crop_no_colour, bottom_left_crop, full_crop_no_colour, cropped_to_card]
+	height = bottom_left_crop.shape[0]
+	width = bottom_left_crop.shape[1]
+	cropped_final = bottom_left_crop[height//2:, :width//2]
+	write_image_to_showcase(8, cropped_final)
+	cv2.imwrite("../Output/FinalZoom.png", cropped_final)
 
-    return imageArray
+	cropped_final_no_colour = extract_colour(cropped_final)
+	write_image_to_showcase(9, cropped_final_no_colour)
+
+	imageArray = [cropped_final_no_colour, cropped_final, bottom_left_crop_no_colour, bottom_left_crop, full_crop_no_colour, cropped_to_card]
+
+	return imageArray
 
 
 
 def extract_colour(img):
-    imgHLS = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+	imgHLS = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
 
-    Lchannel = imgHLS[:, :, 1]
+	Lchannel = imgHLS[:, :, 1]
 
-    mask = cv2.inRange(Lchannel, 0, 80)
+	mask = cv2.inRange(Lchannel, 0, 80)
 
-    result = cv2.bitwise_not(mask)
-    print("GOT HERE")
-    # breakpoint()
-    cv2.imwrite(f"Processed_Files/{file_name}", result)
-    print("FILE NAME IS: " +file_name)
-    return result
+	result = cv2.bitwise_not(mask)
+	print("got here")
+	# breakpoint()
+	cv2.imwrite(f"Processed_Files/{file_name}", result)
+	print("file name is: " +file_name)
+	return result
 
 
 def order_points(pts):
@@ -153,5 +177,12 @@ def four_point_transform(image, pts):
 	# return the warped image
 	return warped
 
+def write_image_to_showcase(i, img):
+    if not os.path.isdir('Showcase'):
+        os.makedirs("Showcase")
+    cv2.imwrite(f"Showcase/{i}.png", img)
+
+
+
 if __name__ == '__main__':
-    main()
+	main()

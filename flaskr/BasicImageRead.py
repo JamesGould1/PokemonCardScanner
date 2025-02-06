@@ -4,13 +4,13 @@ import cv2
 
 file_name = ""
 
-def main():
-    img = cv2.imread(fr'C:\Users\James.Goulding\PycharmProjects\PokemonProject\flaskr\Processed_Files\drifbloomMissingCorner.jpeg')
-    load_image(img)
+def main(file_path):
+    img = cv2.imread(file_path)
+    return load_image(img)
 
 def load_image(img):
     image_cv = img
-        #cv2.imread(fr'C:\Users\James.Goulding\PycharmProjects\PokemonProject\flaskr\{name}'))
+    #cv2.imread(fr'C:\Users\James.Goulding\PycharmProjects\PokemonProject\flaskr\{name}'))
     return process_image(image_cv)
 
 def process_image(image_cv):

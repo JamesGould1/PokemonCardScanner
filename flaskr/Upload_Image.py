@@ -4,12 +4,10 @@ import cv2
 from flask import flash, request, redirect, Blueprint, current_app
 from werkzeug.utils import secure_filename
 from flaskr.BasicImageRead import *
-from flaskr.Preprocess_image import main as main2
-from .Preprocess_image import *
-import asyncio
+from flaskr.Preprocess_image import *
 from .Process_Text import *
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'User_Files')  # Make it relative to your project folder
+UPLOAD_FOLDER = os.path.join(os.getcwd(), '/User_Files/')
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 upload = Blueprint('upload', __name__)
@@ -45,15 +43,19 @@ def upload_file():
             # print("ATTEMPTING ON: ", type(img), img.dtype)
             # print(cv2.imwrite(f"Processed_Files/{filename}",img))
             # cv2.imwrite(f"Processed_Files/{filename}",img)
+            set_name = request.form.get('set_name')
+            shortened_set_name = set_name.split(" ")[0]
             for img in img_array:
                 text = load_image(img)
-                match = extract_number_from_image(text)
+                if not set_name:
+                    match = extract_number_from_image(text)
+                else:
+                    match = extract_number_from_image_with_set(text)
                 if match:
                     break
 
-            set_name = request.form.get('set_name')
             print(f"{set_name} and {match}")
-            final = find_card(set_name, match)
+            final = find_card(shortened_set_name, match)
             if not match:
                 return "Please take another photo"
             return final
@@ -63,7 +65,9 @@ def upload_file():
     <h1>Upload new File</h1>
     <form method=post enctype=multipart/form-data>
       <input type=file name=file>
-      <input type=text name=set_name>
+      <br><br>
+      <span>(Optional) <br> Enter set name to improve matches: </span>
+      <input type=text name=set_name placeholder="Set Name">
       <input type=submit value=Upload>
     </form>
     '''
