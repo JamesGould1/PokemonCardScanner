@@ -1,5 +1,5 @@
 from pokemontcgsdk import RestClient, Card
-#from .APIKEY import API_KEY
+from .APIKEY import API_KEY
 import requests
 import requests_cache
 import re
@@ -7,7 +7,7 @@ import re
 
 requests_cache.install_cache('pokemon_cache', expire_after=3600)
 
-RestClient.configure("b2963db2-0a48-48d2-a3f8-e2ad4f5d782a")
+RestClient.configure(API_KEY)
 
 def main():
     find_card("Paldea","071/193")
@@ -48,12 +48,13 @@ def find_card(set_name, card_number):
     price = card.tcgplayer.prices
     prices = []
     if price.normal is not None:
-        prices.append(f"<p>Normal: {price.normal.market}</p>")
+        prices.append(f"<p>Normal: {price.normal.market}</p><button id=normal>Add to your collection</button>")
     if price.holofoil is not None:
-        prices.append(f"<p>Holofoil: {price.holofoil.market}</p>")
+        prices.append(f"<p>Holofoil: {price.holofoil.market}</p><button id=holofoil>Add to your collection</button>")
     if price.reverseHolofoil is not None:
-        prices.append(f"<p>Reverse Holofoil: {price.reverseHolofoil.market}</p>")
+        prices.append(f"<p>Reverse Holofoil: {price.reverseHolofoil.market}</p><button id=reverseHolofoil>Add to your collection</button>")
     s = "".join(prices)
+    #add css?\zoom in effect
     return f'''
     <!doctype html>
     <link rel="stylesheet" href = "style.css">
