@@ -10,7 +10,6 @@ def main(file_path):
 
 def load_image(img):
     image_cv = img
-    #cv2.imread(fr'C:\Users\James.Goulding\PycharmProjects\PokemonProject\flaskr\{name}'))
     return process_image(image_cv)
 
 def process_image(image_cv):

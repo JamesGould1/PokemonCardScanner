@@ -10,18 +10,8 @@ file_name = ""
 
 
 def main():
-	add_image_process('Eevee.jpeg')
+	add_image_process('drifbloomMissingCorner.jpeg')
 
-		# ##Perhaps use .Canny() for cropping to edges
-		# img2 = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-		# print("Image shape:", img2.shape)
-		# print("Image dtype:", img2.dtype)
-		# img2 = img2.astype(np.uint8)
-		# edges = cv2.Canny(img2, 100, 200, 3)
-		# plt.subplot(122), plt.imshow(edges, cmap='gray')
-		# plt.title('Edge Image'), plt.xticks([]), plt.yticks([])
-		#
-		# plt.show()
 
 def add_image_process(name):
 	global file_name
@@ -44,6 +34,9 @@ def find_largest_area(thresh, originalImg):
 
 	contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
+	#Saving to showcase
+	drawn_image = originalImg.copy(); img_with_all_contours = cv2.drawContours(drawn_image, contours, -1, (0, 255, 0), 5); write_image_to_showcase("ImageWithAllContours", img_with_all_contours)
+
 	filtered = []
 	for c in contours:
 		area = cv2.contourArea(c)
@@ -59,16 +52,13 @@ def find_largest_area(thresh, originalImg):
 			xArea = area
 	filtered = [x]
 
-	drawn_image = originalImg.copy()
-	img_with_all_contours = cv2.drawContours(drawn_image, contours, -1, (0, 255, 0), 5)
-	write_image_to_showcase("ImageWithAllContours", img_with_all_contours)
-	img_with_contour = cv2.drawContours(drawn_image, filtered[0], -1, (0, 255, 0), 5)
-	write_image_to_showcase("ImageWithBigContour", img_with_contour)
+	#Saving to showcase
+	drawn_image = originalImg.copy(); img_with_contour = cv2.drawContours(drawn_image, filtered[0], -1, (0, 255, 0), 5); write_image_to_showcase("ImageWithBigContour", img_with_contour)
 
 	return crop_image_to_box(filtered, originalImg)
 
 def crop_image_to_box(filtered, originalImg):
-
+	# Could use .Canny() for cropping to edges
 	rect = cv2.minAreaRect(filtered[0])
 	box = cv2.boxPoints(rect)
 
@@ -76,20 +66,18 @@ def crop_image_to_box(filtered, originalImg):
 
 	cropped_to_card = four_point_transform(originalImg, pts)
 
-	write_image_to_showcase(4, cropped_to_card)
-	cv2.imwrite("../Output/FullImageCropped.png", cropped_to_card)
+	cv2.imwrite("../Output/FullImageCropped.png", cropped_to_card); write_image_to_showcase(4, cropped_to_card)
 
 	full_crop_no_colour = extract_colour(cropped_to_card)
-	write_image_to_showcase(5, full_crop_no_colour)
-	cv2.imwrite(f"Processed_Files/{file_name}", full_crop_no_colour)
+
+	cv2.imwrite(f"Processed_Files/{file_name}", full_crop_no_colour); write_image_to_showcase(5, full_crop_no_colour)
 
 	img = cropped_to_card
 
 	height = img.shape[0]
 	width = img.shape[1]
 	bottom_left_crop = img[height//2:, :width//2]
-	cv2.imwrite("Processed_Files/QuarterCropped.png", bottom_left_crop)
-	write_image_to_showcase(6, bottom_left_crop)
+	cv2.imwrite("Processed_Files/QuarterCropped.png", bottom_left_crop); write_image_to_showcase(6, bottom_left_crop)
 
 	bottom_left_crop_no_colour = extract_colour(bottom_left_crop)
 	write_image_to_showcase(7, bottom_left_crop_no_colour)
@@ -97,8 +85,7 @@ def crop_image_to_box(filtered, originalImg):
 	height = bottom_left_crop.shape[0]
 	width = bottom_left_crop.shape[1]
 	cropped_final = bottom_left_crop[height//2:, :width//2]
-	write_image_to_showcase(8, cropped_final)
-	cv2.imwrite("../Output/FinalZoom.png", cropped_final)
+	cv2.imwrite("../Output/FinalZoom.png", cropped_final); write_image_to_showcase(8, cropped_final)
 
 	cropped_final_no_colour = extract_colour(cropped_final)
 	write_image_to_showcase(9, cropped_final_no_colour)
